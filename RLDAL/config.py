@@ -34,7 +34,6 @@ class RLDALConfig:
     dqn_epochs: int = 1
     dqn_action_select: str = "softmax"  # "epsilon" or "softmax"
     dqn_temp: float = 0.7
-    bald_iter: int = 20
 
     # Optimization
     optimizer: str = "SGD"

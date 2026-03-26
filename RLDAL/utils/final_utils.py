@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
 import utils.transforms as extended_transforms
-from data import cityscapes, camvid
 from utils.logger import Logger
 from utils.progressbar import progress_bar
 from torch.optim.lr_scheduler import _LRScheduler
@@ -49,7 +48,7 @@ def check_mkdir(dir_name):
 def create_and_load_optimizers(net, opt_choice, lr, wd,
                                momentum, ckpt_path, exp_name_toload, exp_name,
                                snapshot, checkpointer, load_opt,
-                               policy_net=None, lr_dqn=0.0001, al_algorithm='random'):
+                               policy_net=None, lr_dqn=0.0001, al_algorithm='ralis'):
     optimizerP = None
     opt_kwargs = {"lr": lr,
                   "weight_decay": wd,
@@ -915,32 +914,24 @@ def final_test(args, net, criterion):
         net.load_state_dict(net_dict)
     net.eval()
 
-    # Prepare data transforms
-    mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    input_transform = standard_transforms.Compose([
-        standard_transforms.ToTensor(),
-        standard_transforms.Normalize(*mean_std)
-    ])
-    target_transform = extended_transforms.MaskToTensor()
-
-    if 'camvid' in args.dataset:
-        val_set = camvid.Camvid('fine', 'test' if test else 'val',
-                                data_path=args.data_path,
-                                joint_transform=None,
-                                transform=input_transform,
-                                target_transform=target_transform)
-        val_loader = DataLoader(val_set,
-                                batch_size=4,
-                                num_workers=2, shuffle=False)
-    else:
-        val_set = cityscapes.CityScapes('fine', 'val',
-                                        data_path=args.data_path,
-                                        joint_transform=None,
-                                        transform=input_transform,
-                                        target_transform=target_transform)
-        val_loader = DataLoader(val_set,
-                                batch_size=args.val_batch_size,
-                                num_workers=2, shuffle=False)
+    # Reuse data pipeline to build validation loader for supported datasets.
+    from data.data_utils import get_data
+    _, _, val_loader, _ = get_data(
+        data_path=args.data_path,
+        tr_bs=args.train_batch_size,
+        vl_bs=args.val_batch_size,
+        n_workers=2,
+        scale_size=args.scale_size,
+        input_size=args.input_size,
+        supervised=True,
+        num_each_iter=args.num_each_iter,
+        only_last_labeled=args.only_last_labeled,
+        dataset=args.dataset,
+        test=args.test,
+        al_algorithm=args.al_algorithm,
+        full_res=args.full_res,
+        region_size=args.region_size,
+    )
     print('Starting test...')
     vl_loss, val_acc, val_iu, iu_xclass = test(val_loader, net, criterion)
     ## Append info to logger

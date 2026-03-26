@@ -1,12 +1,20 @@
-# RLDAL (ACDC)
+# RLDAL (Public Medical Datasets)
 
-Self-contained RLDAL active-learning pipeline for ACDC 2D slices. Everything needed to run (models, data loaders, utils) lives under this folder, so it can be pushed to GitHub as-is.
+Self-contained RLDAL active-learning pipeline focused on public medical datasets. Everything needed to run (models, data loaders, utils) lives under this folder, so it can be pushed to GitHub as-is.
+
+Supported datasets:
+- ACDC
+- TUI
+- TN3K
+- KVASIR
+
+All other previously included datasets are removed and no longer supported.
 
 ## Layout
 - `run_rldal.py` — CLI entry; flags mirror the original `utils/parser.py`.
 - `config.py` — defaults copied from `utils/parser.py` to stay aligned with `run.py`.
 - `trainer.py` — pretrain + active-learning loop (loss-based reward + DQN selection) using the original utilities.
-- `data_acdc.py` — wraps `data.data_utils.get_data` for ACDC.
+- `data_acdc.py` — wraps `data.data_utils.get_data` for supported datasets.
 - `data/`, `models/`, `utils/` — copied from the original project so this folder runs standalone.
 - `scripts/prepare_acdc_2d.py`, `scripts/make_acdc_al_splits.py` — data conversion and split generation.
 
@@ -16,6 +24,8 @@ pip install -r RLDAL/requirements.txt
 ```
 
 ## Prepare data
+For ACDC, use the scripts below. For TUI/TN3K/KVASIR, place data under your `--data-path` following each dataset loader convention in `RLDAL/data/`.
+
 1) Convert MRI H5 volumes to 2D slices (keeps slices with foreground):
 ```bash
 python RLDAL/scripts/prepare_acdc_2d.py \
@@ -38,7 +48,7 @@ ACDC-dataset/ACDC/2d/
   mask/{train,val,test}/*.png
 ```
 
-## Train (defaults = original parser)
+## Train
 ```bash
 python RLDAL/run_rldal.py \
   --data-path ./scratch/ \
@@ -55,9 +65,10 @@ python RLDAL/run_rldal.py \
 
 Process overview:
 - Pretrain: supervised pretraining on the pretrain split (`train` in `trainer.py`), save `pre_train.pth`.
-- RL loop: per episode, build candidate pool (`num_each_iter * rl_pool`), `compute_state` extracts region features, `select_action` picks regions (DQN/entropy/random), `add_labeled_images` expands the labeled set and rebuilds the dataloader.
+- RL loop: per episode, build candidate pool (`num_each_iter * rl_pool`), `compute_state` extracts region features, `select_action` picks regions with RALIS DQN scoring, `add_labeled_images` expands the labeled set and rebuilds the dataloader.
 - Segmentation training: run `train` on the updated labeled set; reward = batch loss minus its mean.
 - DQN update: `optimize_model_conv` updates the policy net with replay; target net updated periodically.
+- Action score at selection time: normalized q-value multiplied by entropy (`q * entropy`), with an additional entropy filtering step (keep entropy above group mean, then keep top one-third per group).
 - After budget, you can switch to full-supervised/EMA fine-tune (see `train_final_ema` in `utils/final_utils.py`).
 
 Key knobs (defaults):
@@ -73,6 +84,16 @@ Checkpoints/logs: written to `ckpt_path/exp_name/` (pretrain weights, DQN checkp
 - Validation-only: `--test`.
 
 ## Notes
-- Behavioural parity: reward, action selection, and defaults follow the original `run.py`/`utils/parser.py`.
-- Default dataset is ACDC; to switch, change `--dataset` and ensure a loader exists under `RLDAL/data/`.
+- Behavioural parity: reward and action selection follow the RALIS-style training path.
+- Default dataset is ACDC; you may switch among ACDC/TUI/TN3K/KVASIR.
 - This folder is standalone: pushing only `RLDAL/` to GitHub keeps the pipeline runnable.
+
+## Project note
+- The experimental code was originally written quickly for experiments and was relatively messy.
+- The uploaded repository version is cleaned and reorganized with Codex.
+- If any issue appears during training, you can provide training logs and we can help locate the failure point.
+
+## Acknowledgements
+This codebase highly relies on:
+- RALIS: https://github.com/ArantxaCasanova/ralis
+- S4AL: https://github.com/aneesh3108/S4AL

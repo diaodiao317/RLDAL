@@ -27,7 +27,7 @@ from utils.final_utils import (
 from utils.replay_buffer import ReplayMemory, Transition
 
 from .config import RLDALConfig
-from .data_acdc import build_acdc_loaders
+from .data_acdc import build_loaders
 
 
 class RLDALTrainer:
@@ -61,7 +61,7 @@ class RLDALTrainer:
             al_algorithm=cfg.al_algorithm,
         )
 
-        loaders = build_acdc_loaders(cfg)
+        loaders = build_loaders(cfg)
         (
             self.pretrain_loader,
             self.pretrain_set,

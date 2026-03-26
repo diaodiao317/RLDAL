@@ -1,6 +1,6 @@
-"""Entry point to run RLDAL on ACDC with a cleaner interface.
+"""Entry point to run RLDAL on supported public datasets.
 
-This is a thin wrapper over the existing training code, scoped to ACDC.
+This is a thin wrapper over the existing training code.
 """
 import argparse
 
@@ -9,7 +9,7 @@ from RLDAL.trainer import RLDALTrainer
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run RLDAL (ACDC-focused) with defaults from utils/parser.py")
+    parser = argparse.ArgumentParser(description="Run RLDAL with defaults from utils/parser.py")
 
     # Paths / experiment naming
     parser.add_argument("--ckpt-path", type=str, default=RLDALConfig.ckpt_path)
@@ -22,10 +22,9 @@ def parse_args() -> argparse.Namespace:
     # General
     parser.add_argument("--seed", type=int, default=RLDALConfig.seed)
     parser.add_argument("--dataset", type=str, default=RLDALConfig.dataset,
-                        choices=['camvid', 'camvid_subset', 'cityscapes', 'cityscapes_subset', 'cs_upper_bound',
-                                 'gta', 'gta_for_camvid', 'BUSI', 'TUI', 'KVASIR', 'TN3K', 'LA', 'ACDC'])
+                        choices=['ACDC', 'TUI', 'KVASIR', 'TN3K'])
     parser.add_argument("--al-algorithm", type=str, default=RLDALConfig.al_algorithm,
-                        choices=['random', 'entropy', 'bald', 'ralis'])
+                        choices=['ralis'])
     parser.add_argument("--region-size", nargs='+', type=int, default=RLDALConfig.region_size)
     parser.add_argument("--input-size", nargs='+', type=int, default=RLDALConfig.input_size)
     parser.add_argument("--scale-size", type=int, default=RLDALConfig.scale_size)
@@ -44,7 +43,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dqn-action-select", type=str, default=RLDALConfig.dqn_action_select,
                         choices=['epsilon', 'softmax'])
     parser.add_argument("--dqn-temp", type=float, default=RLDALConfig.dqn_temp)
-    parser.add_argument("--bald-iter", type=int, default=RLDALConfig.bald_iter)
 
     # Optim
     parser.add_argument("--optimizer", type=str, default=RLDALConfig.optimizer,
@@ -103,7 +101,6 @@ def main() -> None:
         dqn_epochs=args.dqn_epochs,
         dqn_action_select=args.dqn_action_select,
         dqn_temp=args.dqn_temp,
-        bald_iter=args.bald_iter,
         optimizer=args.optimizer,
         train_batch_size=args.train_batch_size,
         val_batch_size=args.val_batch_size,

@@ -5,14 +5,19 @@ from torch.utils.data import DataLoader
 import torch.utils.data.sampler as sampler
 import utils.joint_transforms as joint_transforms
 import utils.transforms as extended_transforms
-from data import cityscapes, gtav, cityscapes_al, cityscapes_al_splits, camvid, camvid_al , busi_al, busi, tui,tui_al,kvasir, kvasir_al,tn3k,tn3k_al, acdc_al, acdc_2d
-from data import la
+from data import tui, tui_al, kvasir, kvasir_al, tn3k, tn3k_al, acdc_al, acdc_2d
+
+
+SUPPORTED_DATASETS = {'ACDC', 'TUI', 'KVASIR', 'TN3K'}
 
 def get_data(data_path, tr_bs, vl_bs, n_workers=0, scale_size=0, input_size=(256, 512),
-             supervised=False, num_each_iter=1, only_last_labeled=False, dataset='cityscapes', test=False,
+             supervised=False, num_each_iter=1, only_last_labeled=False, dataset='ACDC', test=False,
              al_algorithm='ralis', full_res=False,
              region_size=128):
     print('Loading data...')
+    if dataset not in SUPPORTED_DATASETS:
+        raise ValueError(f"Unsupported dataset '{dataset}'. Supported datasets: {sorted(SUPPORTED_DATASETS)}")
+
     candidate_set = None
     input_transform, target_transform, train_joint_transform, train_joint_transform_sueprvised,val_joint_transform, al_train_joint_transform = \
         get_transforms(scale_size, input_size, region_size, supervised, test, al_algorithm, full_res, dataset)

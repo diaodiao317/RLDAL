@@ -81,13 +81,12 @@ def get_arguments():
                         help="If use only images labeled on the last step")
     parser.add_argument("--rl-pool", type=int, default=50, help="Number of unlabeled regions in each pool")
 
-    parser.add_argument("--al-algorithm", type=str, default='random',
-                        choices=['random', 'entropy', 'bald', 'ralis'],
+    parser.add_argument("--al-algorithm", type=str, default='ralis',
+                        choices=['ralis'],
                         help=" Which metric to choose samples for active learning.")
 
-    parser.add_argument("--dataset", type=str, default='LA',
-                        choices=['camvid', 'camvid_subset', 'cityscapes', 'cityscapes_subset',
-                                 'cs_upper_bound', 'gta', 'gta_for_camvid', 'BUSI', 'TUI', 'KVASIR', 'TN3K', 'LA', 'ACDC'])
+    parser.add_argument("--dataset", type=str, default='ACDC',
+                        choices=['ACDC', 'TUI', 'KVASIR', 'TN3K'])
 
     parser.add_argument("--budget-labels", type=int, default=100)
     parser.add_argument("--num-each-iter", type=int, default=1)  ## Number of regions to label every AL epoch
@@ -113,8 +112,6 @@ def get_arguments():
                         help="Action selection strategy for DQN: epsilon-greedy or softmax sampling")
     parser.add_argument("--dqn-temp", type=float, default=0.7,
                         help="Temperature for softmax action selection (lower -> more greedy)")
-
-    parser.add_argument("--bald-iter", type=int, default=20)
 
     parser.add_argument("--seed", type=int, default=26)  # Seed to control torch and numpy randoms
 
